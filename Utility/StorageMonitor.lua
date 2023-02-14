@@ -107,13 +107,13 @@ local function EventMonitor()
         event.clear();
         event.listen(powerButton);
 
-        while true do
-            local e, s = event.pull(5);
-            if s == powerButton and e == "Trigger" then
-                programStatus = not programStatus
-            else
-                coroutine.yield();
-            end
+        local e, s = event.pull(5);
+        if s == powerButton and e == "Trigger" then
+            programStatus = not programStatus;
+            break;
+        else
+            coroutine.yield();
+            break;
         end
     end
 end
@@ -124,7 +124,7 @@ local function Program()
         local sum, types = GetContainerInfo();
         PrintOutput(sum, types);
         coroutine.yield();
-        break
+        break;
     end
     coroutine.yield();
 end
