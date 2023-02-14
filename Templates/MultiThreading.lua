@@ -17,12 +17,11 @@ function thread.create(func)
     -- Add thread to thread table.
     table.insert(thread.threads, t);
     print('Initializing', t.co);
+    print('NOTICE: Threads running concurrently:', #thread.threads, '\n');
     return t;
 end
 
 function thread:run()
-    print('===== Threads running concurrently: ', #thread.threads, '=====\n');
-
     -- Thread Loop
     while true do
         -- If single-threaded, run that thread.
