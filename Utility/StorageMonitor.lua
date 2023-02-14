@@ -24,15 +24,21 @@ end
 function thread:run()
     -- Thread Loop
     while true do
+        print('total threads: ', #thread.threads)
+        print('cur thread: ', thread.current)
         -- If single-threaded, run that thread.
         if #thread.threads < 1 then return end
 
         -- If multi-threaded, check if current thread exceeds total threads, set to first index if true.
-        if thread.current > #thread.threads then thread.current = 1 end
+        if thread.current > #thread.threads then
+            thread.current = 1
+            print('thread reset to: ', thread.current)
+        end
 
         -- Run current thread then increment current thread counter.
         coroutine.resume(thread.threads[thread.current].co, true);
         thread.current = thread.current + 1;
+        print('thread update to: ', thread.current)
     end
 end
 
@@ -107,29 +113,30 @@ local function EventMonitor()
         event.clear();
         event.listen(powerButton);
 
-        local e, s = event.pull(5);
+        local e, s = event.pull();
         if s == powerButton and e == "Trigger" then
             programStatus = not programStatus;
         end
-        coroutine.yield();
+        break;
     end
 end
 
 -- Program
 local function Program()
-    while (programStatus) do
-        local sum, types = GetContainerInfo();
-        PrintOutput(sum, types);
-        coroutine.yield();
+    while true do
+        while (programStatus) do
+            local sum, types = GetContainerInfo();
+            PrintOutput(sum, types);
+            break
+        end
         break
     end
-    coroutine.yield();
 end
 
 -- Main
 local function Main()
     t1 = thread.create(EventMonitor);
-    t1 = thread.create(Program);
+    t2 = thread.create(Program);
 
     thread.run();
 end
