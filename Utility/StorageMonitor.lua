@@ -93,6 +93,7 @@ local function EventHandler()
 
     local e, s = event.pull()
     if s == powerButton and e == "Trigger" then btnState = not btnState; end
+    coroutine.yield()
 end
 
 -- Program
@@ -103,6 +104,7 @@ local function Program()
         local sum, types = GetContainerInfo();
         PrintOutput(sum, types);
     end
+    coroutine.yield()
 end
 
 -- Main
