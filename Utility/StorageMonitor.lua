@@ -1,31 +1,49 @@
--- Constants
-local controlPanel = component.proxy(component.findComponent(
-                                         "TestEnv_ControlPanel1"))[1];
-local powerButton = controlPanel:getModule(0, 0, 0);
-local btnState = false;
+-- Coroutine Functions
+print('===== Program Started =====');
+thread = {threads = {}, current = 1}
 
--- Threads
-thread = {threads = {}, current = 1};
 function thread.create(func)
     local t = {};
+    -- Create coroutine.
     t.co = coroutine.create(func);
+
+    -- Remove thread from thread table.
     function t:stop()
         for i, th in pairs(thread.threads) do
             if th == t then table.remove(thread.threads, i) end
         end
     end
+
+    -- Add thread to thread table.
     table.insert(thread.threads, t);
+    print('Initializing', t.co);
+    print('NOTICE: Threads running concurrently:', #thread.threads, '\n');
     return t;
 end
 
 function thread:run()
+    -- Thread Loop
     while true do
+        -- If single-threaded, run that thread.
         if #thread.threads < 1 then return end
+
+        -- If multi-threaded, check if current thread exceeds total threads, set to first index if true.
         if thread.current > #thread.threads then thread.current = 1 end
+
+        -- Run current thread then increment current thread counter.
         coroutine.resume(thread.threads[thread.current].co, true);
         thread.current = thread.current + 1;
     end
 end
+
+function sleep(time) event.pull(time) end
+
+-- Program Functions Here
+-- Constants
+local controlPanel = component.proxy(component.findComponent(
+                                         "TestEnv_ControlPanel1"))[1];
+local powerButton = controlPanel:getModule(0, 0, 0);
+programStatus = false;
 
 -- Retrieve Network Storage Containers
 local function GetContainerInfo()
@@ -82,36 +100,39 @@ local function PrintOutput(sum, types)
     DisplayPrint(sum, type);
 end
 
--- Sleep
-local function sleep(seconds) event.pull(seconds) end
+-- Event Monitor
+local function EventMonitor()
+    while (true) do
+        event.ignoreAll();
+        event.clear();
+        event.listen(powerButton);
 
--- Event Handler
-local function EventHandler()
-    event.ignoreAll();
-    event.clear();
-    event.listen(powerButton);
-
-    local e, s = event.pull()
-    if s == powerButton and e == "Trigger" then btnState = not btnState; end
-    coroutine.yield()
+        while true do
+            local e, s = event.pull(5);
+            if s == powerButton and e == "Trigger" then
+                programStatus = not programStatus
+            else
+                coroutine.yield();
+            end
+        end
+    end
 end
 
 -- Program
 local function Program()
-    print('Process: Storage Monitor has started\n');
-    if btnState then
-        sleep(2);
+    while (programStatus) do
         local sum, types = GetContainerInfo();
         PrintOutput(sum, types);
+        coroutine.yield();
+        break
     end
-    coroutine.yield()
+    coroutine.yield();
 end
 
 -- Main
 local function Main()
-    print('Initilizing Program...');
-    t1 = thread.create(EventHandler);
-    t2 = thread.create(Program);
+    t1 = thread.create(EventMonitor);
+    t1 = thread.create(Program);
 
     thread.run();
 end
